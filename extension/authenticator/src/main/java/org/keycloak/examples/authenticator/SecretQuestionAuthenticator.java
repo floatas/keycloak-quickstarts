@@ -43,61 +43,52 @@ import java.util.List;
  * @version $Revision: 1 $
  */
 public class SecretQuestionAuthenticator implements Authenticator {
-
-    protected boolean hasCookie(AuthenticationFlowContext context) {
-        Cookie cookie = context.getHttpRequest().getHttpHeaders().getCookies().get("SECRET_QUESTION_ANSWERED");
-        boolean result = cookie != null;
-        if (result) {
-            System.out.println("Bypassing secret question because cookie is set");
-        }
-        return result;
-    }
-
     @Override
     public void authenticate(AuthenticationFlowContext context) {
-        if (hasCookie(context)) {
-            context.success();
+        // Extract the token from the URL parameter
+        String token = context.getHttpRequest().getUri().getQueryParameters().getFirst("token");
+
+        if (token == null || token.isEmpty()) {
+            context.failure(AuthenticationFlowError.INVALID_USER);
             return;
         }
-        Response challenge = context.form()
-                .createForm("secret-question.ftl");
-        context.challenge(challenge);
+
+        try {
+            // Log token for debugging
+            System.out.println("Received Token: " + token);
+
+            // Check if a user with the token as a username already exists
+            UserModel user = context.getSession().users().getUserByUsername(context.getRealm(), "url-token-user");
+
+            if (user == null) {
+                // If the user does not exist, create a new user
+                System.out.println("User not found, creating a new one");
+                user = context.getSession().users().addUser(context.getRealm(), "url-token-user");
+                user.setEnabled(true);
+                user.setEmail("email@google.com");
+                user.setFirstName("firstName");
+                user.setLastName("lastName");
+            } else {
+                System.out.println("User already exists, reusing the existing user");
+            }
+
+            context.setUser(user);
+            context.success();
+
+        } catch (Exception e) {
+            System.out.println("Exception occurred: " + e.getMessage());
+            context.failure(AuthenticationFlowError.INVALID_CREDENTIALS);
+        }
     }
 
     @Override
     public void action(AuthenticationFlowContext context) {
-//        boolean validated = validateAnswer(context);
-//        if (!validated) {
-//            Response challenge =  context.form()
-//                    .setError("badSecret")
-//                    .createForm("secret-question.ftl");
-//            context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, challenge);
-//            return;
-//        }
-        setCookie(context);
         context.success();
-    }
-
-    protected void setCookie(AuthenticationFlowContext context) {
-        AuthenticatorConfigModel config = context.getAuthenticatorConfig();
-        int maxCookieAge = 60 * 60 * 24 * 30; // 30 days
-        if (config != null) {
-            maxCookieAge = Integer.valueOf(config.getConfig().get("cookie.max.age"));
-
-        }
-        URI uri = context.getUriInfo().getBaseUriBuilder().path("realms").path(context.getRealm().getName()).build();
-
-        NewCookie newCookie = new NewCookie.Builder("SECRET_QUESTION_ANSWERED").value("true")
-                .path(uri.getRawPath())
-                .maxAge(maxCookieAge)
-                .secure(false)
-                .build();
-        context.getSession().getContext().getHttpResponse().setCookieIfAbsent(newCookie);
     }
 
     @Override
     public boolean requiresUser() {
-        return true;
+        return false;
     }
 
     @Override
@@ -112,6 +103,5 @@ public class SecretQuestionAuthenticator implements Authenticator {
     @Override
     public void close() {
     }
-
 
 }

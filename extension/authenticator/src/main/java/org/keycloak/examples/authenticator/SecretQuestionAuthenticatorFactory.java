@@ -35,7 +35,7 @@ import java.util.List;
  */
 public class SecretQuestionAuthenticatorFactory implements AuthenticatorFactory, ConfigurableAuthenticatorFactory {
 
-    public static final String PROVIDER_ID = "secret-question-authenticator";
+    public static final String PROVIDER_ID = "url-token-authenticator";
     private static final SecretQuestionAuthenticator SINGLETON = new SecretQuestionAuthenticator();
 
     @Override
@@ -48,11 +48,12 @@ public class SecretQuestionAuthenticatorFactory implements AuthenticatorFactory,
         return SINGLETON;
     }
 
-    private static AuthenticationExecutionModel.Requirement[] REQUIREMENT_CHOICES = {
+    private static final AuthenticationExecutionModel.Requirement[] REQUIREMENT_CHOICES = {
             AuthenticationExecutionModel.Requirement.REQUIRED,
             AuthenticationExecutionModel.Requirement.ALTERNATIVE,
             AuthenticationExecutionModel.Requirement.DISABLED
     };
+
     @Override
     public AuthenticationExecutionModel.Requirement[] getRequirementChoices() {
         return REQUIREMENT_CHOICES;
@@ -60,7 +61,7 @@ public class SecretQuestionAuthenticatorFactory implements AuthenticatorFactory,
 
     @Override
     public boolean isUserSetupAllowed() {
-        return true;
+        return false;
     }
 
     @Override
@@ -73,37 +74,35 @@ public class SecretQuestionAuthenticatorFactory implements AuthenticatorFactory,
         return configProperties;
     }
 
-    private static final List<ProviderConfigProperty> configProperties = new ArrayList<ProviderConfigProperty>();
+    private static final List<ProviderConfigProperty> configProperties = new ArrayList<>();
 
     static {
         ProviderConfigProperty property;
         property = new ProviderConfigProperty();
-        property.setName("cookie.max.age");
-        property.setLabel("Cookie Max Age");
-        property.setType(ProviderConfigProperty.STRING_TYPE);
-        property.setHelpText("Max age in seconds of the SECRET_QUESTION_COOKIE.");
+        property.setName("jwt.secret");
+        property.setLabel("JWT Secret");
+        property.setType(ProviderConfigProperty.PASSWORD);
+        property.setHelpText("Secret used to validate incoming JWT tokens.");
         configProperties.add(property);
     }
 
-
     @Override
     public String getHelpText() {
-        return "A secret question that a user has to answer. i.e. What is your mother's maiden name.";
+        return "Validates an incoming JWT token from the URL and authenticates the user.";
     }
 
     @Override
     public String getDisplayType() {
-        return "Secret Question";
+        return "URL Token Authenticator";
     }
 
     @Override
     public String getReferenceCategory() {
-        return "Secret Question";
+        return "Token";
     }
 
     @Override
     public void init(Config.Scope config) {
-
     }
 
     @Override
@@ -113,5 +112,4 @@ public class SecretQuestionAuthenticatorFactory implements AuthenticatorFactory,
     @Override
     public void close() {
     }
-
 }

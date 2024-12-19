@@ -58,6 +58,21 @@
             <version>${version.keycloak}</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- Jakarta JAX-RS API (for HTTP request handling) -->
+        <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <version>3.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- JWT library (Optional for Token validation) -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+            <version>0.9.1</version>
+        </dependency>
     </dependencies>
 
     <build>
