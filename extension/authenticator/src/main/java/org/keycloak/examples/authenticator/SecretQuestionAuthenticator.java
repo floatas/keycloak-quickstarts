@@ -42,7 +42,7 @@ import java.util.List;
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
  * @version $Revision: 1 $
  */
-public class SecretQuestionAuthenticator implements Authenticator, CredentialValidator<SecretQuestionCredentialProvider> {
+public class SecretQuestionAuthenticator implements Authenticator {
 
     protected boolean hasCookie(AuthenticationFlowContext context) {
         Cookie cookie = context.getHttpRequest().getHttpHeaders().getCookies().get("SECRET_QUESTION_ANSWERED");
@@ -66,14 +66,14 @@ public class SecretQuestionAuthenticator implements Authenticator, CredentialVal
 
     @Override
     public void action(AuthenticationFlowContext context) {
-        boolean validated = validateAnswer(context);
-        if (!validated) {
-            Response challenge =  context.form()
-                    .setError("badSecret")
-                    .createForm("secret-question.ftl");
-            context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, challenge);
-            return;
-        }
+//        boolean validated = validateAnswer(context);
+//        if (!validated) {
+//            Response challenge =  context.form()
+//                    .setError("badSecret")
+//                    .createForm("secret-question.ftl");
+//            context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, challenge);
+//            return;
+//        }
         setCookie(context);
         context.success();
     }
@@ -95,19 +95,6 @@ public class SecretQuestionAuthenticator implements Authenticator, CredentialVal
         context.getSession().getContext().getHttpResponse().setCookieIfAbsent(newCookie);
     }
 
-    protected boolean validateAnswer(AuthenticationFlowContext context) {
-        MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
-        String secret = formData.getFirst("secret_answer");
-        String credentialId = formData.getFirst("credentialId");
-        if (credentialId == null || credentialId.isEmpty()) {
-            credentialId = getCredentialProvider(context.getSession())
-                    .getDefaultCredential(context.getSession(), context.getRealm(), context.getUser()).getId();
-        }
-
-        UserCredentialModel input = new UserCredentialModel(credentialId, getType(context.getSession()), secret);
-        return getCredentialProvider(context.getSession()).isValid(context.getRealm(), context.getUser(), input);
-    }
-
     @Override
     public boolean requiresUser() {
         return true;
@@ -115,7 +102,7 @@ public class SecretQuestionAuthenticator implements Authenticator, CredentialVal
 
     @Override
     public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user) {
-        return getCredentialProvider(session).isConfiguredFor(realm, user, getType(session));
+        return true;
     }
 
     @Override
@@ -126,8 +113,5 @@ public class SecretQuestionAuthenticator implements Authenticator, CredentialVal
     public void close() {
     }
 
-    @Override
-    public SecretQuestionCredentialProvider getCredentialProvider(KeycloakSession session) {
-        return (SecretQuestionCredentialProvider)session.getProvider(CredentialProvider.class, SecretQuestionCredentialProviderFactory.PROVIDER_ID);
-    }
+
 }

@@ -108,13 +108,10 @@ public class SecretQuestionAuthenticatorFactory implements AuthenticatorFactory,
 
     @Override
     public void postInit(KeycloakSessionFactory factory) {
-
     }
 
     @Override
     public void close() {
-
     }
-
 
 }
